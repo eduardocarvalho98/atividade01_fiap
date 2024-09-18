@@ -1,67 +1,108 @@
-# Instalar e carregar o pacote dplyr e tidyr
-install.packages("tidyr")
-library(tidyr)
-library(dplyr)
+library(kableExtra)
+library(httr)
+library(jsonlite)
 
-# Vamos usar os comandos gather() e spread() do pacote tidyr para converter 
-# um data frame de formato "largo" para "longo" e vice-versa.
+# 1. Ler o arquivo CSV com os dados de culturas
+df <- read.csv("C:\\Users\\dzn1\\PycharmProjects\\pythonProject\\.venv\\Scripts\\Projeto_Atv01\\dados_culturas.csv", 
+               header = TRUE, sep = ",")
 
-# dataframe largo
-# id: Identificador do registro
-# data: Data do registro
-# valor1: Valor da variável 1
-# valor2: Valor da variável 2
+# Verificar os nomes das colunas
+print("Nomes das colunas:")
+print(names(df))
 
-# Criar um data frame de formato "largo"
-dados <- data.frame(
-  id = c(1, 2, 3, 4, 5),
-  data = c("2023-07-20", "2023-07-21", "2023-07-22", "2023-07-23", "2023-07-24"),
-  valor1 = c(10, 20, 30, 40, 50),
-  valor2 = c(20, 40, 60, 80, 100)
+# 3. Filtrar por cultura "Soja" e calcular métricas específicas
+df_soja <- subset(df, Cultura == "Soja")
+print("Dados para a cultura Soja:")
+print(df_soja)
+
+# Cálculos para Soja
+media_area_soja <- mean(df_soja$Area..m2., na.rm = TRUE)
+media_cloreto_soja <- mean(df_soja$Qtd.Cloreto.Kg., na.rm = TRUE)
+desvio_area_soja <- sd(df_soja$Area..m2., na.rm = TRUE)
+desvio_cloreto_soja <- sd(df_soja$Qtd.Cloreto.Kg., na.rm = TRUE)
+
+# 4. Filtrar por cultura "Cacau" e calcular métricas específicas
+df_cacau <- subset(df, Cultura == "Cacau")
+print("Dados para a cultura Cacau:")
+print(df_cacau)
+
+# Cálculos para Cacau
+media_area_cacau <- mean(df_cacau$Area..m2., na.rm = TRUE)
+media_cloreto_cacau <- mean(df_cacau$Qtd.Cloreto.Kg., na.rm = TRUE)
+desvio_area_cacau <- sd(df_cacau$Area..m2., na.rm = TRUE)
+desvio_cloreto_cacau <- sd(df_cacau$Qtd.Cloreto.Kg., na.rm = TRUE)
+
+# 5. Calcular a média e o desvio padrão da Área e Cloreto de Potassio para todas as culturas (geral)
+media_area_total <- mean(df$Area..m2., na.rm = TRUE)
+media_cloreto_total <- mean(df$Qtd.Cloreto.Kg., na.rm = TRUE)
+desvio_area_total <- sd(df$Area..m2., na.rm = TRUE)
+desvio_cloreto_total <- sd(df$Qtd.Cloreto.Kg., na.rm = TRUE)
+
+# Exibir os resultados gerais no console
+print(paste("Média da Área (geral):", media_area_total))
+print(paste("Média do Cloreto de Potassio (geral):", media_cloreto_total))
+print(paste("Desvio padrão da Área (geral):", desvio_area_total))
+print(paste("Desvio padrão do Cloreto de Potassio (geral):", desvio_cloreto_total))
+
+# 6. Exibir os dados originais e os resultados de forma organizada e bonita com kableExtra
+
+# Criar a tabela com os dados originais
+tabela_original <- kable(df, format = "html", caption = "Dados Originais das Culturas") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+# Criar a tabela com os resultados
+resultados <- data.frame(
+  Cultura = c("Soja", "Cacau", "Geral"),
+  Media_Area = c(media_area_soja, media_area_cacau, media_area_total),
+  Media_Cloreto = c(media_cloreto_soja, media_cloreto_cacau, media_cloreto_total),
+  Desvio_Area = c(desvio_area_soja, desvio_area_cacau, desvio_area_total),
+  Desvio_Cloreto = c(desvio_cloreto_soja, desvio_cloreto_cacau, desvio_cloreto_total)
 )
 
-print(dados)
-# Convertendo de formato "largo" para "longo"
-# Para converter o data frame de formato "largo" para "longo", podemos usar o 
-# comando gather(). O comando gather() usa as seguintes especificações:
+# Criar a tabela formatada com kableExtra para os resultados
+tabela_resultados <- kable(resultados, format = "html", caption = "Médias e Desvios por Cultura") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  column_spec(2, bold = TRUE, color = "blue") %>%  # Coluna de Média da Área em negrito e azul
+  row_spec(0, bold = TRUE, background = "lightgray") %>%  # Cabeçalho em negrito com fundo cinza claro
+  add_header_above(c(" ", "Métricas da Área" = 2, "Métricas do Cloreto" = 2))  # Agrupar cabeçalhos
 
-# key: Nome da coluna que conterá os nomes das variáveis
-# value: Nome da coluna que conterá os valores das variáveis
-# id: Colunas que não devem ser incluídas no formato "longo"
+# Exibir as tabelas
+print(tabela_original)
+print(tabela_resultados)
 
-# Convertendo de formato "largo" para "longo"
-dados_longos <- dados %>%
-  gather(key = variavel, value = valor, -id, -data)
+# Parte da API
+# Definir a chave da API
+api_key <- "e8d58b7f450c5620c483f1cab9aa8367"
 
-# Visualizar as primeiras linhas do dataframe "dados_longos" 
-head(dados_longos)
+# Definir a cidade
+cidade <- "Fortaleza"
 
-# Convertendo de formato "longo" para "largo"
-# Para converter o data frame de formato "longo" para "largo", podemos usar 
-# o comando spread(). O comando spread() usa as seguintes especificações:
-# key: Nome da coluna que contém os nomes das variáveis
-# value: Nome da coluna que contém os valores das variáveis
+# Construir a URL da API
+url <- paste0("http://api.openweathermap.org/data/2.5/weather?q=", cidade, "&appid=", api_key, "&units=metric&lang=pt_br")
 
-dados_largos <- dados_longos %>%
-  spread(key = variavel, value = valor)
+resposta <- GET(url)
 
-# Visualizar as primeiras linhas do dataframe "dados_largos" 
-head(dados_largos)
-
-
-# Carregue a biblioteca dplyr
-library(dplyr)
-
-# Crie um data frame com valores ausentes
-vendas_loja <- data.frame(
-  data_venda = c("2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04", "2023-01-05"),
-  produto = c("A", "B", "A", NA, "C"),
-  quantidade = c(10, 15, NA, 20, 25),
-  receita = c(100, 150, 200, NA, 250)
-)
-
-# Identifique e conte os valores ausentes em cada coluna
-valores_ausentes <- colSums(is.na(vendas_loja))
-print(valores_ausentes)
-
-print("ola mundo")
+# Verificar o status da resposta
+if (status_code(resposta) == 200) {
+  # Parsear os dados JSON retornados
+  dados_climaticos <- fromJSON(content(resposta, "text"), flatten = TRUE)
+  
+  # Exibir a estrutura dos dados para depuração
+  str(dados_climaticos)
+  
+  # Acesso seguro aos dados climáticos
+  temperatura <- dados_climaticos$main$temp
+  descricao <- dados_climaticos$weather[1, "description"]
+  umidade <- dados_climaticos$main$humidity
+  vento <- dados_climaticos$wind$speed
+  
+  # Exibir as informações no terminal
+  cat("Informações meteorológicas para", cidade, ":\n")
+  cat("Temperatura atual:", temperatura, "°C\n")
+  cat("Descrição:", descricao, "\n")
+  cat("Umidade:", umidade, "%\n")
+  cat("Velocidade do vento:", vento, "m/s\n")
+} else {
+  # Caso a requisição falhe, exibir a mensagem de erro
+  cat("Erro ao obter dados meteorológicos. Verifique a chave da API ou a cidade.")
+}
